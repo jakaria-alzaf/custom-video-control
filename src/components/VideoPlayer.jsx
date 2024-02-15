@@ -105,6 +105,14 @@ const VideoPlayer = () => {
 
 
 
+	const handlePlay = () => {
+		setPlaying(true);
+	};
+
+	const handlePause = () => {
+		setPlaying(false);
+	};
+
 	const togglePlayPause = () => {
 		const video = videoRef.current;
 
@@ -118,6 +126,7 @@ const VideoPlayer = () => {
 	};
 
 	const handleSoundChange = (event) => {
+		event.stopPropagation()
 		const volume = parseFloat(event.target.value);
 		const video = videoRef.current;
 
@@ -240,15 +249,15 @@ const VideoPlayer = () => {
 
 	}, []);
 
-	console.log(handleFormatTime(currentTime), handleFormatTime(duration))
+
 
 
 	return (
 		<div className=" my-12 video-player max-w-[675px] max-h-[438px] h-full w-full relative group border-[0.5px] rounded-sm " >
 			{/* Video Player */}
-			<video onClick={togglePlayPause} muted={isMuted} onTimeUpdate={handleProgress} className="w-[675px] hover:cursor-pointer" ref={videoRef} src="https://storage.googleapis.com/web-dev-assets/video-and-source-tags/chrome.mp4"></video>
+			<video onPlay={handlePlay} onPause={handlePause} muted={isMuted} onTimeUpdate={handleProgress} className="w-[675px] hover:cursor-pointer" ref={videoRef} src="https://storage.googleapis.com/web-dev-assets/video-and-source-tags/chrome.mp4"></video>
 
-			<div className="video-controls-container control-background py-1 z-0  w-full absolute bottom-0 px-2.5 opacity-0 translate-y-1 invisible group-hover:opacity-100 group-hover:translate-y-0 group-hover:visible group-hover:delay-75 transition-all duration-150 ease-in delay-200 group-hover:z-50">
+			<div className={`video-controls-container control-background py-1 z-40  w-full absolute bottom-0 px-2.5  ${!isPlaying ? '' : 'opacity-0 group-hover:opacity-100  transition-all duration-150 ease-in delay-200 '}`}>
 				<div
 					ref={progressRef}
 					className="bg-transparent py-[2px]"
@@ -296,18 +305,23 @@ const VideoPlayer = () => {
 												<path fillRule="evenodd" clipRule="evenodd" d="M7.51986 2.06206C7.8105 2.18821 8 2.48539 8 2.81502V12.595C8 12.9246 7.8105 13.2218 7.51986 13.3479C7.22923 13.4741 6.89469 13.4043 6.67225 13.1712L3.78895 10.15H1.77778C1.34823 10.15 1 9.7851 1 9.33497V6.07501C1 5.62489 1.34823 5.26001 1.77778 5.26001H3.78895L6.67225 2.23873C6.89469 2.00564 7.22923 1.93592 7.51986 2.06206Z" fill="white" />
 												<path fillRule="evenodd" clipRule="evenodd" d="M9.42213 4.23013C9.72585 3.92329 10.2183 3.92329 10.5221 4.23013C10.9311 4.64332 11.2648 5.13336 11.5003 5.67763C11.7505 6.25618 11.8889 6.89461 11.8889 7.56362C11.8889 8.86519 11.3657 10.0449 10.5221 10.8971C10.2183 11.2039 9.72585 11.2039 9.42213 10.8971C9.11841 10.5903 9.11841 10.0928 9.42213 9.78597C9.98602 9.21633 10.3334 8.43172 10.3334 7.56362C10.3334 7.11519 10.2409 6.69066 10.0748 6.30678C9.91827 5.94477 9.69575 5.61767 9.42213 5.34129C9.11841 5.03446 9.11841 4.53697 9.42213 4.23013Z" fill="white" />
 											</svg>
-												: <svg onClick={toggleMute} className="hover:cursor-pointer" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-													<path fillRule="evenodd" clipRule="evenodd" d="M7.51986 2.3588C7.8105 2.48491 8 2.78201 8 3.11156V12.8889C8 13.2185 7.8105 13.5156 7.51986 13.6417C7.22923 13.7678 6.89469 13.6981 6.67225 13.465L3.78895 10.4446H1.77778C1.34823 10.4446 1 10.0798 1 9.62978V6.37068C1 5.92069 1.34823 5.5559 1.77778 5.5559H3.78895L6.67225 2.53542C6.89469 2.30239 7.22923 2.23269 7.51986 2.3588Z" fill="white" />
-													<path fillRule="evenodd" clipRule="evenodd" d="M11.622 2.23864C11.9258 1.92045 12.4182 1.92045 12.722 2.23864C14.1286 3.71221 15 5.75028 15 8.00001C15 10.2497 14.1286 12.2878 12.722 13.7614C12.4182 14.0795 11.9258 14.0795 11.622 13.7614C11.3183 13.4432 11.3183 12.9273 11.622 12.6091C12.7489 11.4287 13.4445 9.80023 13.4445 8.00001C13.4445 6.19982 12.7489 4.57138 11.622 3.39091C11.3183 3.07272 11.3183 2.55683 11.622 2.23864ZM9.42213 4.54319C9.72585 4.225 10.2183 4.225 10.5221 4.54319C10.9311 4.97167 11.2648 5.47983 11.5003 6.04424C11.7505 6.64419 11.8889 7.30624 11.8889 8.00001C11.8889 9.34974 11.3657 10.5731 10.5221 11.4568C10.2183 11.775 9.72585 11.775 9.42213 11.4568C9.11841 11.1387 9.11841 10.6228 9.42213 10.3046C9.98602 9.71386 10.3334 8.90023 10.3334 8.00001C10.3334 7.53499 10.2409 7.09475 10.0748 6.69667C9.91827 6.32126 9.69575 5.98206 9.42213 5.69546C9.11841 5.37728 9.11841 4.86138 9.42213 4.54319Z" fill="white" />
+												: <svg onClick={toggleMute} className="hover:cursor-pointer" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+
+													<path d="M9.29813 0.58414C9.11253 0.495606 8.89387 0.519073 8.73387 0.64814L3.5456 4.79854H1.06667C0.478933 4.79854 0 5.27747 0 5.86521V10.1319C0 10.7207 0.478933 11.1985 1.06667 11.1985H3.5456L8.7328 15.3489C8.82987 15.4257 8.94827 15.4652 9.06667 15.4652C9.1456 15.4652 9.22453 15.4471 9.29813 15.4119C9.48267 15.3233 9.6 15.1367 9.6 14.9319V1.06521C9.6 0.860406 9.48267 0.67374 9.29813 0.58414Z" fill="white" />
+													<path d="M12.2986 4.2277C12.0885 4.02076 11.7514 4.02396 11.5445 4.23196C11.3376 4.4421 11.3397 4.77916 11.5488 4.98716C12.3552 5.7829 12.7989 6.85276 12.7989 7.99943C12.7989 9.1461 12.3552 10.216 11.5488 11.0117C11.3397 11.2176 11.3376 11.5557 11.5445 11.7658C11.649 11.8714 11.7866 11.9237 11.9232 11.9237C12.0586 11.9237 12.1941 11.8725 12.2986 11.769C13.3098 10.7738 13.8656 9.4341 13.8656 7.99943C13.8656 6.56476 13.3098 5.22503 12.2986 4.2277Z" fill="white" />
+													<path d="M13.8076 2.72512C13.5975 2.51712 13.2604 2.51925 13.0524 2.72832C12.8455 2.93739 12.8476 3.27552 13.0556 3.48245C14.2684 4.68459 14.9362 6.28885 14.9362 7.99979C14.9362 9.71072 14.2684 11.3139 13.0556 12.5161C12.8476 12.7241 12.8455 13.0622 13.0524 13.2713C13.158 13.3758 13.2946 13.4281 13.4311 13.4281C13.5666 13.4281 13.7031 13.3769 13.8076 13.2734C15.2242 11.8707 16.0028 9.99765 16.0028 7.99979C16.0028 6.00192 15.2242 4.12885 13.8076 2.72512Z" fill="white" />
+													<clipPath id="clip0_2_153230">
+														<rect width="16" height="16" fill="white" />
+													</clipPath>
 												</svg>
 
 									}
 								</span>
-								<input className="sound-slider" type="range" name="volume" id="volume" min="0" max="1" step="0.05" defaultValue="1" onChange={handleSoundChange} />
+								<input className="sound-slider" type="range" name="volume" id="volume" min="0" max="1" step="0.05" defaultValue="0.7" onChange={handleSoundChange} />
 							</div>
 						</div>
 						{/* Time timeline */}
-						<div className="time-container text-white text-[14px]">
+						<div className="time-container text-white text-[14px] select-none">
 							<span className="current-time ">{handleFormatTime(currentTime)}</span>/<span>{handleFormatTime(duration)}</span>
 						</div>
 					</div>
@@ -335,6 +349,34 @@ const VideoPlayer = () => {
 						</div>
 					</div>
 				</div>
+			</div>
+			{/* Middle Play Button */}
+			<div className="absolute  inset-0 flex items-center justify-center cursor-pointer group " onClick={togglePlayPause}
+			>
+				<div className={`${!isPlaying ? '' : 'opacity-0 translate-y-1 invisible group-hover:opacity-100 group-hover:translate-y-0 group-hover:visible group-hover:delay-75 transition-all duration-150 ease-in delay-200'}`}>
+					{
+						isPlaying ? (
+							<span >
+								<svg xmlns="http://www.w3.org/2000/svg" width="74" height="74" viewBox="0 0 74 74" fill="none">
+									<path d="M37 72C56.33 72 72 56.33 72 37C72 17.67 56.33 2 37 2C17.67 2 2 17.67 2 37C2 56.33 17.67 72 37 72Z" fill="black" fillOpacity="0.24" stroke="white" strokeWidth="4" />
+									<path d="M34.75 27.4643V45.5357C34.75 46.1893 34.4904 46.8161 34.0282 47.2782C33.5661 47.7404 32.9393 48 32.2857 48H31.4643C30.8107 48 30.1839 47.7404 29.7218 47.2782C29.2596 46.8161 29 46.1893 29 45.5357V27.4643C29 26.8107 29.2596 26.1839 29.7218 25.7218C30.1839 25.2596 30.8107 25 31.4643 25H32.2857C32.9393 25 33.5661 25.2596 34.0282 25.7218C34.4904 26.1839 34.75 26.8107 34.75 27.4643ZM42.9643 25H42.1429C41.4893 25 40.8625 25.2596 40.4003 25.7218C39.9382 26.1839 39.6786 26.8107 39.6786 27.4643V45.5357C39.6786 46.1893 39.9382 46.8161 40.4003 47.2782C40.8625 47.7404 41.4893 48 42.1429 48H42.9643C43.6179 48 44.2447 47.7404 44.7068 47.2782C45.1689 46.8161 45.4286 46.1893 45.4286 45.5357V27.4643C45.4286 26.8107 45.1689 26.1839 44.7068 25.7218C44.2447 25.2596 43.6179 25 42.9643 25Z" fill="white" />
+									<clipPath id="clip0_1251_11939">
+										<rect width="74" height="74" fill="white" />
+									</clipPath>
+								</svg>
+							</span>) : (<span >
+								<svg xmlns="http://www.w3.org/2000/svg" width="74" height="74" viewBox="0 0 74 74" fill="none">
+									<path d="M37 72C56.33 72 72 56.33 72 37C72 17.67 56.33 2 37 2C17.67 2 2 17.67 2 37C2 56.33 17.67 72 37 72Z" fill="black" fillOpacity="0.24" stroke="white" strokeWidth="4" />
+									<path d="M31.9419 25.5705C30.6097 24.8593 29 25.8246 29 27.3348V46.6651C29 48.1753 30.6096 49.1406 31.9419 48.4294L50.0461 38.7647C51.4569 38.0115 51.4569 35.9892 50.0461 35.236L31.9419 25.5705Z" fill="white" />
+									<clipPath id="clip0_1251_11930">
+										<rect width="74" height="74" fill="white" />
+									</clipPath>
+								</svg>
+							</span>)
+					}
+				</div>
+
+
 			</div>
 
 			{optionOpen && <div className="absolute bottom-11 right-4 bg-[#3D3D3DA1] rounded-sm text-white" >

@@ -5,9 +5,9 @@
 
 .sound-slider {
 	-webkit-appearance: none;
-	width: 50px;
+	width: 60px;
 	height: 8px;
-	background-color: orange;
+	background-color: #F97316;
 	outline: none;
 	opacity: 1;
 	-webkit-transition: .2s;
