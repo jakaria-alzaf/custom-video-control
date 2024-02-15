@@ -92,7 +92,6 @@ const VideoPlayer = () => {
 	const [progress, setProgress] = useState(0);
 	const [isPlaying, setPlaying] = useState(false);
 	const [volume, setVolume] = useState(1);
-	const [defaultVolume, setDefaultVolume] = useState(0);
 	const [isMuted, setIsMuted] = useState(false);
 	const videoRef = useRef(null);
 	const [currentTime, setCurrentTime] = useState(0);
@@ -134,7 +133,6 @@ const VideoPlayer = () => {
 
 		if (video) {
 			setVolume(volume)
-			setDefaultVolume(volume);
 			video.volume = volume;
 		}
 	};
@@ -149,10 +147,9 @@ const VideoPlayer = () => {
 		const progressDiv = progressRef.current;
 		const video = videoRef.current;
 
-		// Calculate the percentage of click position within the progress bar
 		const percent = (e.nativeEvent.offsetX / progressDiv.offsetWidth) * 100;
 
-		// Set the video's current time based on the percentage
+
 		const currentTime = (percent / 100) * video.duration;
 		video.currentTime = currentTime;
 	};
@@ -237,13 +234,15 @@ const VideoPlayer = () => {
 	const handleIncreaseVolume = () => {
 		const video = videoRef.current;
 		if (video.volume < 1) {
-			video.volume += 0.1;
+			setVolume(prev => prev += 0.1)
+			video.volume += 0.1
 		}
 	};
 
 	const handleDecreaseVolume = () => {
 		const video = videoRef.current;
 		if (video.volume >= 0.1) {
+			setVolume(prev => prev -= 0.1)
 			video.volume -= 0.1;
 		}
 	};
@@ -251,11 +250,6 @@ const VideoPlayer = () => {
 
 	useEffect(() => {
 		const video = videoRef.current;
-
-		if (videoRef.current) {
-			// Set the default volume based on the video's current volume
-			setDefaultVolume(videoRef.current.volume);
-		}
 
 		const handleKeyDown = (event) => {
 			const { keyCode } = event;
@@ -400,20 +394,15 @@ const VideoPlayer = () => {
 						</div>
 					</div>
 					<div className="right-options flex items-center gap-2.5">
-						{/* Full screen */}
+						{/* Mini Player */}
 
-						<svg className="hover:cursor-pointer" onClick={handleTogglePictureInPicture} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<g clipPath="url(#clip0_779_501)">
-								<path fillRule="evenodd" clipRule="evenodd" d="M1.6 13.7143V2.28571H14.4V13.7143H1.6ZM0 0.571429C0 0.25584 0.179088 0 0.4 0H15.6C15.8209 0 16 0.25584 16 0.571429V15.4286C16 15.7441 15.8209 16 15.6 16H0.4C0.179088 16 0 15.7441 0 15.4286V0.571429ZM8.4 6.85714C8.17912 6.85714 8 7.11303 8 7.42857V12C8 12.3155 8.17912 12.5714 8.4 12.5714H13.2C13.4209 12.5714 13.6 12.3155 13.6 12V7.42857C13.6 7.11303 13.4209 6.85714 13.2 6.85714H8.4Z" fill="white" />
-							</g>
-							<defs>
-								<clipPath id="clip0_779_501">
-									<rect width="16" height="16" fill="white" />
-								</clipPath>
-							</defs>
+						<svg className="mini-player hover:cursor-pointer" onClick={handleTogglePictureInPicture} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path fillRule="evenodd" clipRule="evenodd" d="M1.6 13.7143V2.28571H14.4V13.7143H1.6ZM0 0.571429C0 0.25584 0.179088 0 0.4 0H15.6C15.8209 0 16 0.25584 16 0.571429V15.4286C16 15.7441 15.8209 16 15.6 16H0.4C0.179088 16 0 15.7441 0 15.4286V0.571429ZM8.4 6.85714C8.17912 6.85714 8 7.11303 8 7.42857V12C8 12.3155 8.17912 12.5714 8.4 12.5714H13.2C13.4209 12.5714 13.6 12.3155 13.6 12V7.42857C13.6 7.11303 13.4209 6.85714 13.2 6.85714H8.4Z" fill="white" />
+							<clipPath id="clip0_779_501">
+								<rect width="16" height="16" fill="white" />
+							</clipPath>
 						</svg>
-
-
+						{/* Full Screen */}
 
 						<div className="full-screen hover:cursor-pointer" onClick={handleFullScreen}>
 							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
