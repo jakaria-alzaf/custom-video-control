@@ -92,6 +92,7 @@ const VideoPlayer = () => {
 	const [progress, setProgress] = useState(0);
 	const [isPlaying, setPlaying] = useState(false);
 	const [volume, setVolume] = useState(1);
+	const [defaultVolume, setDefaultVolume] = useState(0);
 	const [isMuted, setIsMuted] = useState(false);
 	const videoRef = useRef(null);
 	const [currentTime, setCurrentTime] = useState(0);
@@ -116,14 +117,15 @@ const VideoPlayer = () => {
 	const togglePlayPause = () => {
 		const video = videoRef.current;
 
-		if (isPlaying) {
-			video.pause();
-		} else {
+		if (video.paused) {
 			video.play();
+		} else {
+			video.pause();
 		}
 
-		setPlaying(!isPlaying);
+		setPlaying(!video.paused);
 	};
+
 
 	const handleSoundChange = (event) => {
 		event.stopPropagation()
@@ -132,6 +134,7 @@ const VideoPlayer = () => {
 
 		if (video) {
 			setVolume(volume)
+			setDefaultVolume(volume);
 			video.volume = volume;
 		}
 	};
@@ -162,11 +165,7 @@ const VideoPlayer = () => {
 		if (isDragging) {
 			const progressDiv = progressRef.current;
 			const video = videoRef.current;
-
-			// Calculate the percentage of drag position within the progress bar
 			const percent = (e.nativeEvent.offsetX / progressDiv.offsetWidth) * 100;
-
-			// Set the video's current time based on the percentage
 			const currentTime = (percent / 100) * video.duration;
 			video.currentTime = currentTime;
 		}
@@ -175,8 +174,6 @@ const VideoPlayer = () => {
 	const handleMouseUp = () => {
 		setIsDragging(false);
 	};
-
-
 
 	const toggleMute = () => {
 		setIsMuted((prevMuted) => !prevMuted);
@@ -199,12 +196,10 @@ const VideoPlayer = () => {
 		const videoElement = videoRef.current;
 
 		if (document.fullscreenElement) {
-			// If in full-screen mode, exit full-screen
 			if (document.exitFullscreen) {
 				document.exitFullscreen();
 			}
 		} else {
-			// If not in full-screen mode, enter full-screen
 			if (videoElement.requestFullscreen) {
 				videoElement.requestFullscreen();
 			}
@@ -217,9 +212,87 @@ const VideoPlayer = () => {
 		setSelectedOptionOpen(true)
 	}
 
+	const handleTogglePictureInPicture = async () => {
+		if (document.pictureInPictureElement) {
+			await document.exitPictureInPicture();
+		} else {
+			try {
+				await videoRef.current.requestPictureInPicture();
+			} catch (error) {
+				console.error('Error entering Picture-in-Picture mode:', error);
+			}
+		}
+	};
+
+	const handleRewind = () => {
+		const video = videoRef.current;
+		video.currentTime -= 5;
+	};
+
+	const handleFastForward = () => {
+		const video = videoRef.current;
+		video.currentTime += 5;
+	};
+
+	const handleIncreaseVolume = () => {
+		const video = videoRef.current;
+		if (video.volume < 1) {
+			video.volume += 0.1;
+		}
+	};
+
+	const handleDecreaseVolume = () => {
+		const video = videoRef.current;
+		if (video.volume >= 0.1) {
+			video.volume -= 0.1;
+		}
+	};
+
 
 	useEffect(() => {
 		const video = videoRef.current;
+
+		if (videoRef.current) {
+			// Set the default volume based on the video's current volume
+			setDefaultVolume(videoRef.current.volume);
+		}
+
+		const handleKeyDown = (event) => {
+			const { keyCode } = event;
+
+
+			switch (keyCode) {
+				case 32:
+				case 75:
+					togglePlayPause()
+					break;
+				case 37:
+					handleRewind();
+					break;
+				case 39:
+					handleFastForward();
+					break;
+				case 70:
+					handleFullScreen();
+					break;
+				case 73:
+					handleTogglePictureInPicture();
+					break;
+				case 38:
+					handleIncreaseVolume();
+					break;
+				case 40:
+					handleDecreaseVolume();
+					break;
+				case 77:
+					toggleMute();
+					break;
+				default:
+					break;
+			}
+		};
+
+
 
 		const handleTimeUpdate = () => {
 			setCurrentTime(video.currentTime);
@@ -234,12 +307,13 @@ const VideoPlayer = () => {
 			setCurrentTime(0);
 		};
 
+		document.addEventListener('keydown', handleKeyDown);
 		video.addEventListener('timeupdate', handleTimeUpdate);
 		video.addEventListener('durationchange', handleDurationChange);
 		video.addEventListener('ended', handleVideoEnd);
 
-
 		return () => {
+			document.removeEventListener('keydown', handleKeyDown);
 			video.removeEventListener('timeupdate', handleTimeUpdate);
 			video.removeEventListener('durationchange', handleDurationChange);
 			video.removeEventListener('ended', handleVideoEnd);
@@ -247,7 +321,7 @@ const VideoPlayer = () => {
 		};
 
 
-	}, []);
+	}, [videoRef.current]);
 
 
 
@@ -279,7 +353,7 @@ const VideoPlayer = () => {
 					<div className="left-options flex items-center gap-5">
 						<div className="flex items-center gap-2.5">
 							<div className="player-controls">
-								<button className="play-button" onClick={togglePlayPause}>{isPlaying ?
+								<button className="play-button mt-1" onClick={togglePlayPause}>{isPlaying ?
 									(<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
 										<path d="M6.33333 3.0026C6.33333 2.08213 5.58714 1.33594 4.66667 1.33594C3.74619 1.33594 3 2.08213 3 3.0026V13.0026C3 13.9231 3.74619 14.6693 4.66667 14.6693C5.58714 14.6693 6.33333 13.9231 6.33333 13.0026V3.0026Z" fill="white" />
 										<path d="M12.9974 3.0026C12.9974 2.08213 12.2512 1.33594 11.3307 1.33594C10.4103 1.33594 9.66406 2.08213 9.66406 3.0026V13.0026C9.66406 13.9231 10.4103 14.6693 11.3307 14.6693C12.2512 14.6693 12.9974 13.9231 12.9974 13.0026V3.0026Z" fill="white" />
@@ -297,13 +371,13 @@ const VideoPlayer = () => {
 								<span>
 
 									{
-										volume <= 0 || isMuted ? <svg onClick={toggleMute} className="hover:cursor-pointer" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-											<path fillRule="evenodd" clipRule="evenodd" d="M7.90339 2.05983C8.21113 2.18144 8.41178 2.46795 8.41178 2.78574V12.2142C8.41178 12.5321 8.21113 12.8185 7.90339 12.9402C7.59567 13.0618 7.24145 12.9945 7.00592 12.7698L3.95301 9.85711H1.82353C1.36871 9.85711 1 9.50535 1 9.0714V5.92858C1 5.49464 1.36871 5.14287 1.82353 5.14287H3.95301L7.00592 2.23015C7.24145 2.00544 7.59567 1.93822 7.90339 2.05983Z" fill="white" />
-											<path fillRule="evenodd" clipRule="evenodd" d="M10.3 5.37295C10.6216 5.06611 11.1431 5.06611 11.4647 5.37295L12.5294 6.3888L13.5942 5.37295C13.9157 5.06611 14.4372 5.06611 14.7588 5.37295C15.0804 5.67979 15.0804 6.17727 14.7588 6.48412L13.694 7.49996L14.7588 8.5158C15.0804 8.82262 15.0804 9.32014 14.7588 9.62696C14.4372 9.93378 13.9157 9.93378 13.5942 9.62696L12.5294 8.61111L11.4647 9.62696C11.1431 9.93378 10.6216 9.93378 10.3 9.62696C9.97844 9.32014 9.97844 8.82262 10.3 8.5158L11.3648 7.49996L10.3 6.48412C9.97844 6.17727 9.97844 5.67979 10.3 5.37295Z" fill="white" />
+										volume <= 0 || isMuted ? <svg onClick={toggleMute} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+											<path d="M9.29813 0.58414C9.11253 0.495606 8.89387 0.519073 8.73387 0.64814L3.5456 4.79854H1.06667C0.478933 4.79854 0 5.27747 0 5.86521V10.1319C0 10.7207 0.478933 11.1985 1.06667 11.1985H3.5456L8.7328 15.3489C8.82987 15.4257 8.94827 15.4652 9.06667 15.4652C9.1456 15.4652 9.22453 15.4471 9.29813 15.4119C9.48267 15.3233 9.6 15.1367 9.6 14.9319V1.06521C9.6 0.860406 9.48267 0.67374 9.29813 0.58414Z" fill="white" />
+											<path d="M14.5298 6.03223C14.2368 5.73926 13.7622 5.73926 13.4692 6.03223L12.5583 6.94302L11.6475 6.03223C11.3545 5.73926 10.8799 5.73926 10.5869 6.03223C10.294 6.3252 10.2939 6.80005 10.5869 7.09277L11.4978 8.00354L10.5869 8.9143C10.2939 9.20727 10.2939 9.68188 10.5869 9.97485C10.7334 10.1213 10.9253 10.1946 11.1172 10.1946C11.3091 10.1946 11.501 10.1213 11.6475 9.97485L12.5584 9.06405L13.4692 9.97485C13.6157 10.1213 13.8076 10.1946 13.9995 10.1946C14.1914 10.1946 14.3833 10.1213 14.5298 9.97485C14.8228 9.68188 14.8228 9.20727 14.5298 8.9143L13.6189 8.00354L14.5298 7.09277C14.8227 6.80005 14.8228 6.3252 14.5298 6.03223Z" fill="white" />
 										</svg>
-											: volume < 0.60 ? <svg onClick={toggleMute} className="hover:cursor-pointer" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-												<path fillRule="evenodd" clipRule="evenodd" d="M7.51986 2.06206C7.8105 2.18821 8 2.48539 8 2.81502V12.595C8 12.9246 7.8105 13.2218 7.51986 13.3479C7.22923 13.4741 6.89469 13.4043 6.67225 13.1712L3.78895 10.15H1.77778C1.34823 10.15 1 9.7851 1 9.33497V6.07501C1 5.62489 1.34823 5.26001 1.77778 5.26001H3.78895L6.67225 2.23873C6.89469 2.00564 7.22923 1.93592 7.51986 2.06206Z" fill="white" />
-												<path fillRule="evenodd" clipRule="evenodd" d="M9.42213 4.23013C9.72585 3.92329 10.2183 3.92329 10.5221 4.23013C10.9311 4.64332 11.2648 5.13336 11.5003 5.67763C11.7505 6.25618 11.8889 6.89461 11.8889 7.56362C11.8889 8.86519 11.3657 10.0449 10.5221 10.8971C10.2183 11.2039 9.72585 11.2039 9.42213 10.8971C9.11841 10.5903 9.11841 10.0928 9.42213 9.78597C9.98602 9.21633 10.3334 8.43172 10.3334 7.56362C10.3334 7.11519 10.2409 6.69066 10.0748 6.30678C9.91827 5.94477 9.69575 5.61767 9.42213 5.34129C9.11841 5.03446 9.11841 4.53697 9.42213 4.23013Z" fill="white" />
+											: volume < 0.60 ? <svg onClick={toggleMute} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+												<path d="M9.29813 0.58414C9.11253 0.495606 8.89387 0.519073 8.73387 0.64814L3.5456 4.79854H1.06667C0.478933 4.79854 0 5.27747 0 5.86521V10.1319C0 10.7207 0.478933 11.1985 1.06667 11.1985H3.5456L8.7328 15.3489C8.82987 15.4257 8.94827 15.4652 9.06667 15.4652C9.1456 15.4652 9.22453 15.4471 9.29813 15.4119C9.48267 15.3233 9.6 15.1367 9.6 14.9319V1.06521C9.6 0.860406 9.48267 0.67374 9.29813 0.58414Z" fill="white" />
+												<path d="M12.2986 4.2277C12.0885 4.02076 11.7514 4.02396 11.5445 4.23196C11.3376 4.4421 11.3397 4.77916 11.5488 4.98716C12.3552 5.7829 12.7989 6.85276 12.7989 7.99943C12.7989 9.1461 12.3552 10.216 11.5488 11.0117C11.3397 11.2176 11.3376 11.5557 11.5445 11.7658C11.649 11.8714 11.7866 11.9237 11.9232 11.9237C12.0586 11.9237 12.1941 11.8725 12.2986 11.769C13.3098 10.7738 13.8656 9.4341 13.8656 7.99943C13.8656 6.56476 13.3098 5.22503 12.2986 4.2277Z" fill="white" />
 											</svg>
 												: <svg onClick={toggleMute} className="hover:cursor-pointer" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
 
@@ -317,7 +391,7 @@ const VideoPlayer = () => {
 
 									}
 								</span>
-								<input className="sound-slider" type="range" name="volume" id="volume" min="0" max="1" step="0.05" defaultValue="0.7" onChange={handleSoundChange} />
+								<input className="sound-slider" type="range" name="volume" id="volume" min="0" max="1" step="0.05" onChange={handleSoundChange} />
 							</div>
 						</div>
 						{/* Time timeline */}
@@ -325,8 +399,22 @@ const VideoPlayer = () => {
 							<span className="current-time ">{handleFormatTime(currentTime)}</span>/<span>{handleFormatTime(duration)}</span>
 						</div>
 					</div>
-					<div className="right-options flex items-center gap-2">
+					<div className="right-options flex items-center gap-2.5">
 						{/* Full screen */}
+
+						<svg className="hover:cursor-pointer" onClick={handleTogglePictureInPicture} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<g clipPath="url(#clip0_779_501)">
+								<path fillRule="evenodd" clipRule="evenodd" d="M1.6 13.7143V2.28571H14.4V13.7143H1.6ZM0 0.571429C0 0.25584 0.179088 0 0.4 0H15.6C15.8209 0 16 0.25584 16 0.571429V15.4286C16 15.7441 15.8209 16 15.6 16H0.4C0.179088 16 0 15.7441 0 15.4286V0.571429ZM8.4 6.85714C8.17912 6.85714 8 7.11303 8 7.42857V12C8 12.3155 8.17912 12.5714 8.4 12.5714H13.2C13.4209 12.5714 13.6 12.3155 13.6 12V7.42857C13.6 7.11303 13.4209 6.85714 13.2 6.85714H8.4Z" fill="white" />
+							</g>
+							<defs>
+								<clipPath id="clip0_779_501">
+									<rect width="16" height="16" fill="white" />
+								</clipPath>
+							</defs>
+						</svg>
+
+
+
 						<div className="full-screen hover:cursor-pointer" onClick={handleFullScreen}>
 							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
 								<path d="M5.45455 0H0.363648C0.162648 0 0 0.162648 0 0.363648V5.45455C0 5.65555 0.162648 5.8182 0.363648 5.8182H1.09091C1.29191 5.8182 1.45456 5.65555 1.45456 5.45455V1.45456H5.45455C5.65555 1.45456 5.8182 1.29191 5.8182 1.09091V0.363648C5.8182 0.162648 5.65555 0 5.45455 0Z" fill="white" />
