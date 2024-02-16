@@ -106,6 +106,7 @@ const VideoPlayer = () => {
 	const soundChildRef = useRef(null)
 	const [isSoundDragging, setIsSoundDragging] = useState(false);
 	const menuRef = useRef(null)
+	const [soundHover, setSoundHover] = useState(false)
 
 
 	const handlePlay = () => {
@@ -442,7 +443,7 @@ const VideoPlayer = () => {
 			{/* Video Player */}
 			<video onPlay={handlePlay} onPause={handlePause} muted={isMuted} onTimeUpdate={handleProgress} className="w-[675px] hover:cursor-pointer" ref={videoRef} src="https://storage.googleapis.com/web-dev-assets/video-and-source-tags/chrome.mp4"></video>
 
-			<div className={`video-controls-container control-background py-1 z-40  w-full absolute bottom-0 px-2.5  ${!isPlaying ? '' : 'opacity-0 group-hover:opacity-100  transition-all duration-150 ease-in delay-200 '}`}>
+			<div className={` video-controls-container control-background py-1 z-40  w-full absolute bottom-0 px-2.5  ${!isPlaying ? '' : 'opacity-0 group-hover:opacity-100  transition-all duration-150 ease-in  '}`}>
 				<div
 					ref={progressRef}
 					className="bg-transparent py-[2px]"
@@ -477,7 +478,7 @@ const VideoPlayer = () => {
 								}</button>
 							</div>
 							{/* Volume control */}
-							<div className="volume-controls flex items-center gap-2.5 group">
+							<div className={`volume-controls flex items-center gap-3`} onMouseEnter={() => setSoundHover(prev => !prev)} onMouseLeave={() => setSoundHover(prev => !prev)}>
 								<span>
 
 									{
@@ -503,19 +504,19 @@ const VideoPlayer = () => {
 								</span>
 								<div
 									ref={soundParentRef}
-									className=" bg-white rounded-full  opacity-0  w-0  group-hover:opacity-100 group-hover:w-[50px] transition-all duration-200 delay-150 ease-in"
+									className={`bg-white rounded-full ${soundHover ? 'opacity-100 w-[50px] ' : 'opacity-0  w-0'}   transition-all duration-200 delay-['25ms'] ease-in`}
 									style={{ cursor: 'pointer' }}
 									onClick={handleSoundMouseClick}
 									onMouseMove={handleSoundMouseMove}
 									onMouseUp={handleSoundMouseUp}
 								>
-									<div className="soundChild bg-orange-500 py-0.5	 rounded-full cursor-pointer relative"
+									<div className="soundChild bg-orange-500 py-0.5	 rounded-full cursor-pointer relative pl-1.5"
 										ref={soundChildRef}
 										onMouseDown={handleSoundMouseDown}
 										style={{ width: `${Math.floor(volume * 100)}%` }}
 
 									>
-										<div className={`absolute h-3 w-3 bg-orange-500 rounded-full -top-1 right-0 ${volume < 0.05 ? 'hidden' : 'block'}`}></div>
+										<div className={`absolute h-3 w-3 bg-orange-500 rounded-full -top-1  right-0 `}></div>
 									</div>
 								</div>
 							</div>
