@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRef } from "react";
 
 
@@ -102,8 +102,8 @@ const VideoPlayer = () => {
 	const [selectedReport, setSelectedReport] = useState('')
 	const progressRef = useRef(null)
 	const [isDragging, setIsDragging] = useState(false);
-
-
+	const soundParentRef = useRef(null)
+	const soundChildRef = useRef(null)
 
 
 
@@ -127,26 +127,12 @@ const VideoPlayer = () => {
 		setPlaying(!video.paused);
 	};
 
-
-	// const handleSoundChange = (event) => {
-	// 	event.stopPropagation()
-	// 	const volume = parseFloat(event.target.value);
-	// 	const video = videoRef.current;
-
-	// 	if (video) {
-	// 		setVolume(volume)
-	// 		video.volume = volume;
-	// 	}
-	// };
-
-
-
-
 	const handleProgress = () => {
 		const video = videoRef.current;
 		const percent = (video.currentTime / video.duration) * 100;
 		setProgress(percent);
 	};
+
 
 	const handleProgressTimeOnclick = (e) => {
 		const progressDiv = progressRef.current;
@@ -174,8 +160,31 @@ const VideoPlayer = () => {
 	};
 
 	const handleMouseUp = () => {
-		setIsDragging(false);
+		setIsSoundDragging(false);
 	};
+
+
+	const handleSoundMouseClick = (e) => {
+		const divA = soundParentRef.current;
+		const divB = soundChildRef.current;
+
+		const { left: divALeft, width: divAWidth } = divA.getBoundingClientRect();
+		const { left: divBLeft, width: divBWidth } = divB.getBoundingClientRect();
+
+		const offsetX = e.clientX - divBLeft;
+
+		let newDragPercentage = offsetX / divAWidth;
+
+		newDragPercentage = Math.max(0, Math.min(1, newDragPercentage));
+
+		localStorage.setItem('userSetting', JSON.stringify({ muted: false, userVolume: newDragPercentage }));
+		setVolume(newDragPercentage);
+		videoRef.current.volume = newDragPercentage
+
+
+	};
+
+
 
 	const toggleMute = () => {
 		setIsMuted((prevMuted) => !prevMuted);
@@ -374,6 +383,10 @@ const VideoPlayer = () => {
 	}, [isMuted, volume]);
 
 
+
+
+
+
 	return (
 		<div className=" my-12 video-player max-w-[675px] max-h-[438px] h-full w-full relative group border-[0.5px] rounded-sm " >
 			{/* Video Player */}
@@ -385,7 +398,6 @@ const VideoPlayer = () => {
 					className="bg-transparent py-[2px]"
 					style={{ cursor: 'pointer' }}
 					onClick={handleProgressTimeOnclick}
-
 					onMouseDown={handleMouseDown}
 					onMouseMove={handleMouseMove}
 					onMouseUp={handleMouseUp}
@@ -439,23 +451,23 @@ const VideoPlayer = () => {
 
 									}
 								</span>
-								{/* <input className="sound-slider" type="range" name="volume" id="volume" min="0" max="1" step="0.05" onChange={handleSoundChange} /> */}
 
 
+								<div
+									ref={soundParentRef}
+									className=" bg-white rounded-full w-[50px]"
+									style={{ cursor: 'pointer' }}
+									onClick={handleSoundMouseClick}
+								>
+									<div className="child bg-orange-500 py-1 rounded-full cursor-pointer"
+										ref={soundChildRef}
+										style={{ width: `${Math.floor(volume * 100)}%` }}
 
-
-								<div className="bg-white w-[60px] rounded-full relative" >
-									<div className="bg-orange-500 py-1 rounded-full " style={{ width: `${Math.floor(volume * 100)}%` }}>
+									>
 
 									</div>
 
-
 								</div>
-
-
-
-
-
 							</div>
 						</div>
 						{/* Time timeline */}
@@ -522,8 +534,6 @@ const VideoPlayer = () => {
 							</span>)
 					}
 				</div>
-
-
 			</div>
 
 			{optionOpen && <div className="absolute bottom-11 right-4 bg-[#3D3D3DA1] rounded-sm text-white" >
@@ -531,8 +541,6 @@ const VideoPlayer = () => {
 					{
 						mainMenus.map(item => <li key={item?.id} onClick={() => handleSelectedOption(item?.value)} className="hover:cursor-pointer  flex items-center gap-1.5 py-2 px-[15px] hover:bg-[#4F4F4FA1]"><span>{item.icon}</span> {item?.name}</li>)
 					}
-
-
 				</ul>
 			</div>}
 
