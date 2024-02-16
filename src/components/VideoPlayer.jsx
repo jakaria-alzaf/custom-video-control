@@ -104,6 +104,8 @@ const VideoPlayer = () => {
 	const [isDragging, setIsDragging] = useState(false);
 	const soundParentRef = useRef(null)
 	const soundChildRef = useRef(null)
+	const [isSoundDragging, setIsSoundDragging] = useState(false);
+
 
 
 
@@ -127,6 +129,7 @@ const VideoPlayer = () => {
 		setPlaying(!video.paused);
 	};
 
+	// Progress
 	const handleProgress = () => {
 		const video = videoRef.current;
 		const percent = (video.currentTime / video.duration) * 100;
@@ -164,6 +167,47 @@ const VideoPlayer = () => {
 	};
 
 
+	// Sound
+	const handleSoundMouseDown = () => {
+		setIsSoundDragging(true);
+	};
+
+	const handleSoundMouseMove = (e) => {
+		if (isSoundDragging) {
+			const divA = soundParentRef.current;
+			const divB = soundChildRef.current;
+
+			const { left: divALeft, width: divAWidth } = divA.getBoundingClientRect();
+			const { left: divBLeft } = divB.getBoundingClientRect();
+
+			const offsetX = e.clientX - divBLeft;
+
+			// Calculate the percentage based on the offset within div B relative to div A
+			let newDragPercentage = offsetX / divAWidth;
+
+			// Ensure the percentage stays within bounds (0 to 1)
+			newDragPercentage = Math.max(0, Math.min(1, newDragPercentage));
+			setVolume(newDragPercentage);
+			let mute = false;
+			if (newDragPercentage < 0.05) {
+				mute = true
+			}
+			const volumeInfo = {
+				isMuted: mute,
+				userVolume: newDragPercentage
+			}
+			localStorage.setItem('userSetting', JSON.stringify(volumeInfo))
+
+			setIsSoundDragging(newDragPercentage);
+		}
+	};
+
+	const handleSoundMouseUp = () => {
+		setIsSoundDragging(false);
+	};
+
+
+
 	const handleSoundMouseClick = (e) => {
 		const divA = soundParentRef.current;
 		const divB = soundChildRef.current;
@@ -177,10 +221,14 @@ const VideoPlayer = () => {
 
 		newDragPercentage = Math.max(0, Math.min(1, newDragPercentage));
 
-		localStorage.setItem('userSetting', JSON.stringify({ muted: false, userVolume: newDragPercentage }));
 		setVolume(newDragPercentage);
-		videoRef.current.volume = newDragPercentage
 
+		let mute = false;
+		if (newDragPercentage <= 0.05) {
+			mute = true
+		}
+		localStorage.setItem('userSetting', JSON.stringify({ muted: mute, userVolume: newDragPercentage }));
+		videoRef.current.volume = newDragPercentage
 
 	};
 
@@ -403,7 +451,7 @@ const VideoPlayer = () => {
 					onMouseUp={handleMouseUp}
 					onMouseLeave={handleMouseUp}
 				>
-					<div className="bg-white">
+					<div className="bg-white" >
 						<div className=" border-[1px] border-[#F97316] my-2 " style={{ width: `${progress}%` }}>
 						</div>
 					</div>
@@ -458,9 +506,12 @@ const VideoPlayer = () => {
 									className=" bg-white rounded-full w-[50px]"
 									style={{ cursor: 'pointer' }}
 									onClick={handleSoundMouseClick}
+									onMouseMove={handleSoundMouseMove}
+									onMouseUp={handleSoundMouseUp}
 								>
 									<div className="child bg-orange-500 py-1 rounded-full cursor-pointer"
 										ref={soundChildRef}
+										onMouseDown={handleSoundMouseDown}
 										style={{ width: `${Math.floor(volume * 100)}%` }}
 
 									>
