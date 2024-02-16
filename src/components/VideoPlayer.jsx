@@ -105,8 +105,7 @@ const VideoPlayer = () => {
 	const soundParentRef = useRef(null)
 	const soundChildRef = useRef(null)
 	const [isSoundDragging, setIsSoundDragging] = useState(false);
-
-
+	const menuRef = useRef(null)
 
 
 	const handlePlay = () => {
@@ -135,7 +134,6 @@ const VideoPlayer = () => {
 		const percent = (video.currentTime / video.duration) * 100;
 		setProgress(percent);
 	};
-
 
 	const handleProgressTimeOnclick = (e) => {
 		const progressDiv = progressRef.current;
@@ -166,6 +164,7 @@ const VideoPlayer = () => {
 		setIsSoundDragging(false);
 	};
 
+	console.log(selectedOptionsOpen)
 
 	// Sound
 	const handleSoundMouseDown = () => {
@@ -206,8 +205,6 @@ const VideoPlayer = () => {
 		setIsSoundDragging(false);
 	};
 
-
-
 	const handleSoundMouseClick = (e) => {
 		const divA = soundParentRef.current;
 		const divB = soundChildRef.current;
@@ -231,8 +228,6 @@ const VideoPlayer = () => {
 		videoRef.current.volume = newDragPercentage
 
 	};
-
-
 
 	const toggleMute = () => {
 		setIsMuted((prevMuted) => !prevMuted);
@@ -414,12 +409,22 @@ const VideoPlayer = () => {
 			setCurrentTime(0);
 		};
 
+
+		const handler = (e) => {
+			if (!menuRef.current.contains(e.target)) {
+				setOptionOpen(false)
+				setSelectedOptionOpen(false)
+			}
+		}
+
+		document.addEventListener("mousedown", handler)
 		document.addEventListener('keydown', handleKeyDown);
 		video.addEventListener('timeupdate', handleTimeUpdate);
 		video.addEventListener('durationchange', handleDurationChange);
 		video.addEventListener('ended', handleVideoEnd);
 
 		return () => {
+			document.removeEventListener("mousedown", handler)
 			document.removeEventListener('keydown', handleKeyDown);
 			video.removeEventListener('timeupdate', handleTimeUpdate);
 			video.removeEventListener('durationchange', handleDurationChange);
@@ -429,10 +434,6 @@ const VideoPlayer = () => {
 
 
 	}, [isMuted, volume]);
-
-
-
-
 
 
 	return (
@@ -499,8 +500,6 @@ const VideoPlayer = () => {
 
 									}
 								</span>
-
-
 								<div
 									ref={soundParentRef}
 									className=" bg-white rounded-full w-[50px]"
@@ -509,15 +508,13 @@ const VideoPlayer = () => {
 									onMouseMove={handleSoundMouseMove}
 									onMouseUp={handleSoundMouseUp}
 								>
-									<div className="child bg-orange-500 py-1 rounded-full cursor-pointer"
+									<div className="soundChild bg-orange-500 py-1 rounded-full cursor-pointer"
 										ref={soundChildRef}
 										onMouseDown={handleSoundMouseDown}
 										style={{ width: `${Math.floor(volume * 100)}%` }}
 
 									>
-
 									</div>
-
 								</div>
 							</div>
 						</div>
@@ -550,12 +547,52 @@ const VideoPlayer = () => {
 						</div>
 
 						{/* Options */}
-						<div className="more-options  text-white text-xs ">
+						<div className="more-options  text-white text-xs" ref={menuRef}>
 							<svg className="hover:cursor-pointer" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" onClick={() => setOptionOpen(prev => !prev)}>
 								<path d="M6.5 8C6.5 8.827 7.173 9.5 8 9.5C8.827 9.5 9.5 8.827 9.5 8C9.5 7.173 8.827 6.5 8 6.5C7.173 6.5 6.5 7.173 6.5 8Z" fill="white" />
 								<path d="M6.5 13C6.5 13.827 7.173 14.5 8 14.5C8.827 14.5 9.5 13.827 9.5 13C9.5 12.173 8.827 11.5 8 11.5C7.173 11.5 6.5 12.173 6.5 13Z" fill="white" />
 								<path d="M6.5 3C6.5 3.827 7.173 4.5 8 4.5C8.827 4.5 9.5 3.827 9.5 3C9.5 2.173 8.827 1.5 8 1.5C7.173 1.5 6.5 2.173 6.5 3Z" fill="white" />
 							</svg>
+
+							{optionOpen && <div className="absolute bottom-11 right-4 bg-[#3D3D3DA1] rounded-sm text-white" >
+								<ul >
+									{
+										mainMenus.map(item => <li key={item?.id} onClick={() => handleSelectedOption(item?.value)} className="hover:cursor-pointer  flex items-center gap-1.5 py-2 px-[15px] hover:bg-[#4F4F4FA1]"><span>{item.icon}</span> {item?.name}</li>)
+									}
+								</ul>
+							</div>}
+
+							{selectedOptionsOpen && selectedOption === 'quality' && <div className="absolute bottom-11 right-4 text-xs text-white bg-[#3D3D3DA1] rounded max-w-[152px] w-full">
+								<ul>
+									<li onClick={() => setSelectedOption(prev => !prev)} className="py-2 px-[15px] hover:bg-[#4F4F4FA1] hover:cursor-pointer">720p</li>
+									<li onClick={() => setSelectedOption(prev => !prev)} className="py-2 px-[15px] hover:bg-[#4F4F4FA1] hover:cursor-pointer">480p</li>
+									<li onClick={() => setSelectedOption(prev => !prev)} className="py-2 px-[15px] hover:bg-[#4F4F4FA1] hover:cursor-pointer">360p</li>
+									<li onClick={() => setSelectedOption(prev => !prev)} className="py-2 px-[15px] hover:bg-[#4F4F4FA1] hover:cursor-pointer">144p</li>
+								</ul>
+							</div>}
+							{selectedOptionsOpen && selectedOption === 'speed' && <div className="absolute bottom-11 right-4 text-white text-xs bg-[#3D3D3DA1] rounded max-w-[152px] w-full">
+								<ul>
+									<li onClick={() => setSelectedOption(prev => !prev)} className="py-2 px-[15px] hover:bg-[#4F4F4FA1] hover:cursor-pointer">2x</li>
+									<li onClick={() => setSelectedOption(prev => !prev)} className="py-2 px-[15px] hover:bg-[#4F4F4FA1] hover:cursor-pointer">1.5x</li>
+									<li onClick={() => setSelectedOption(prev => !prev)} className="py-2 px-[15px] hover:bg-[#4F4F4FA1] hover:cursor-pointer">1.25x</li>
+									<li onClick={() => setSelectedOption(prev => !prev)} className="py-2 px-[15px] hover:bg-[#4F4F4FA1] hover:cursor-pointer">1x</li>
+									<li onClick={() => setSelectedOption(prev => !prev)} className="py-2 px-[15px] hover:bg-[#4F4F4FA1] hover:cursor-pointer">0.5x</li>
+								</ul>
+							</div>}
+							{selectedOptionsOpen && selectedOption === 'report' && <div className="absolute bottom-11 right-4 text-white bg-[#3D3D3DA1] rounded max-w-[200px] w-full">
+								<ul>
+									{reportOptions?.map(item => <li onClick={() => setSelectedReport(item?.id)} key={item?.id} className="py-2 px-1.5 text-xs hover:bg-[#4F4F4FA1] hover:cursor-pointer flex gap-1">{item?.name} <span className={`${selectedReport === item?.id ? 'inline' : 'hidden'}`}>
+										<svg width="16" height="12" viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+											<path id="Vector" d="M5.59511 11.8581C5.39409 11.8581 5.19308 11.7811 5.03995 11.628L0.23035 6.81826C-0.0767834 6.51128 -0.0767834 6.01495 0.23035 5.70796C0.537337 5.40097 1.03352 5.40097 1.34066 5.70796L5.59511 9.96241L14.6595 0.898209C14.9664 0.591222 15.4626 0.591222 15.7698 0.898209C16.0767 1.20531 16.0767 1.70153 15.7698 2.00866L6.15041 11.628C6.07755 11.701 5.99099 11.7589 5.8957 11.7984C5.80041 11.8379 5.69825 11.8582 5.59511 11.8581Z" fill="white" />
+
+										</svg>
+									</span></li>)}
+
+									<div className="flex justify-end px-2 py-2">
+										<button onClick={() => setSelectedOption(prev => !prev)} className="bg-[#F97316] px-2 py-1.5 rounded-sm font-medium text-xs">Submit</button>
+									</div>
+								</ul>
+							</div>}
 						</div>
 					</div>
 				</div>
@@ -587,45 +624,7 @@ const VideoPlayer = () => {
 				</div>
 			</div>
 
-			{optionOpen && <div className="absolute bottom-11 right-4 bg-[#3D3D3DA1] rounded-sm text-white" >
-				<ul >
-					{
-						mainMenus.map(item => <li key={item?.id} onClick={() => handleSelectedOption(item?.value)} className="hover:cursor-pointer  flex items-center gap-1.5 py-2 px-[15px] hover:bg-[#4F4F4FA1]"><span>{item.icon}</span> {item?.name}</li>)
-					}
-				</ul>
-			</div>}
 
-			{selectedOptionsOpen && selectedOption === 'quality' && <div className="absolute bottom-11 right-4 text-xs text-white bg-[#3D3D3DA1] rounded max-w-[152px] w-full">
-				<ul>
-					<li onClick={() => setSelectedOption(prev => !prev)} className="py-2 px-[15px] hover:bg-[#4F4F4FA1] hover:cursor-pointer">720p</li>
-					<li onClick={() => setSelectedOption(prev => !prev)} className="py-2 px-[15px] hover:bg-[#4F4F4FA1] hover:cursor-pointer">480p</li>
-					<li onClick={() => setSelectedOption(prev => !prev)} className="py-2 px-[15px] hover:bg-[#4F4F4FA1] hover:cursor-pointer">360p</li>
-					<li onClick={() => setSelectedOption(prev => !prev)} className="py-2 px-[15px] hover:bg-[#4F4F4FA1] hover:cursor-pointer">144p</li>
-				</ul>
-			</div>}
-			{selectedOptionsOpen && selectedOption === 'speed' && <div className="absolute bottom-11 right-4 text-white text-xs bg-[#3D3D3DA1] rounded max-w-[152px] w-full">
-				<ul>
-					<li onClick={() => setSelectedOption(prev => !prev)} className="py-2 px-[15px] hover:bg-[#4F4F4FA1] hover:cursor-pointer">2x</li>
-					<li onClick={() => setSelectedOption(prev => !prev)} className="py-2 px-[15px] hover:bg-[#4F4F4FA1] hover:cursor-pointer">1.5x</li>
-					<li onClick={() => setSelectedOption(prev => !prev)} className="py-2 px-[15px] hover:bg-[#4F4F4FA1] hover:cursor-pointer">1.25x</li>
-					<li onClick={() => setSelectedOption(prev => !prev)} className="py-2 px-[15px] hover:bg-[#4F4F4FA1] hover:cursor-pointer">1x</li>
-					<li onClick={() => setSelectedOption(prev => !prev)} className="py-2 px-[15px] hover:bg-[#4F4F4FA1] hover:cursor-pointer">0.5x</li>
-				</ul>
-			</div>}
-			{selectedOptionsOpen && selectedOption === 'report' && <div className="absolute bottom-11 right-4 text-white bg-[#3D3D3DA1] rounded max-w-[200px] w-full">
-				<ul>
-					{reportOptions?.map(item => <li onClick={() => setSelectedReport(item?.id)} key={item?.id} className="py-2 px-1.5 text-xs hover:bg-[#4F4F4FA1] hover:cursor-pointer flex gap-1">{item?.name} <span className={`${selectedReport === item?.id ? 'inline' : 'hidden'}`}>
-						<svg width="16" height="12" viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path id="Vector" d="M5.59511 11.8581C5.39409 11.8581 5.19308 11.7811 5.03995 11.628L0.23035 6.81826C-0.0767834 6.51128 -0.0767834 6.01495 0.23035 5.70796C0.537337 5.40097 1.03352 5.40097 1.34066 5.70796L5.59511 9.96241L14.6595 0.898209C14.9664 0.591222 15.4626 0.591222 15.7698 0.898209C16.0767 1.20531 16.0767 1.70153 15.7698 2.00866L6.15041 11.628C6.07755 11.701 5.99099 11.7589 5.8957 11.7984C5.80041 11.8379 5.69825 11.8582 5.59511 11.8581Z" fill="white" />
-
-						</svg>
-					</span></li>)}
-
-					<div className="flex justify-end px-2 py-2">
-						<button onClick={() => setSelectedOption(prev => !prev)} className="bg-[#F97316] px-2 py-1.5 rounded-sm font-medium text-xs">Submit</button>
-					</div>
-				</ul>
-			</div>}
 		</div>
 	);
 };
