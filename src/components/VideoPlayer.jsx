@@ -225,6 +225,7 @@ const VideoPlayer = () => {
 		}
 		localStorage.setItem('userSetting', JSON.stringify({ muted: mute, userVolume: newDragPercentage }));
 		videoRef.current.volume = newDragPercentage
+		setIsSoundDragging(false)
 
 	};
 
@@ -452,14 +453,14 @@ const VideoPlayer = () => {
 					onMouseLeave={handleMouseUp}
 					onMouseMove={handleMouseMove}
 				>
-					<div className="bg-white" >
-						<div className=" border-[1px] border-[#F97316] my-2 " style={{ width: `${progress}%` }}>
+					<div className="bg-white rounded-full" >
+						<div className=" border-[2px] border-[#F97316] my-2 rounded-full " style={{ width: `${progress}%` }}>
 						</div>
 					</div>
 				</div>
 
 				<div className="flex items-center justify-between">
-					<div className="left-options flex items-center gap-5">
+					<div className="left-options flex items-center gap-1">
 						<div className="flex items-center gap-2.5">
 							<div className="player-controls">
 								<button className="play-button mt-1" onClick={togglePlayPause}>{isPlaying ?
@@ -476,7 +477,7 @@ const VideoPlayer = () => {
 								}</button>
 							</div>
 							{/* Volume control */}
-							<div className="volume-controls flex items-center gap-1">
+							<div className="volume-controls flex items-center gap-2.5 group">
 								<span>
 
 									{
@@ -502,24 +503,25 @@ const VideoPlayer = () => {
 								</span>
 								<div
 									ref={soundParentRef}
-									className=" bg-white rounded-full w-[50px]"
+									className=" bg-white rounded-full  opacity-0  w-0  group-hover:opacity-100 group-hover:w-[50px] transition-all duration-200 delay-150 ease-in"
 									style={{ cursor: 'pointer' }}
 									onClick={handleSoundMouseClick}
 									onMouseMove={handleSoundMouseMove}
 									onMouseUp={handleSoundMouseUp}
 								>
-									<div className="soundChild bg-orange-500 py-1 rounded-full cursor-pointer"
+									<div className="soundChild bg-orange-500 py-0.5	 rounded-full cursor-pointer relative"
 										ref={soundChildRef}
 										onMouseDown={handleSoundMouseDown}
 										style={{ width: `${Math.floor(volume * 100)}%` }}
 
 									>
+										<div className={`absolute h-3 w-3 bg-orange-500 rounded-full -top-1 right-0 ${volume < 0.05 ? 'hidden' : 'block'}`}></div>
 									</div>
 								</div>
 							</div>
 						</div>
 						{/* Time timeline */}
-						<div className="time-container text-white text-[14px] select-none">
+						<div className="time-container text-white text-[12px] select-none">
 							<span className="current-time ">{handleFormatTime(currentTime)}</span>/<span>{handleFormatTime(duration)}</span>
 						</div>
 					</div>
