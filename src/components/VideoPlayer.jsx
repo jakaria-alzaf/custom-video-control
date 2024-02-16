@@ -144,6 +144,7 @@ const VideoPlayer = () => {
 
 		const currentTime = (percent / 100) * video.duration;
 		video.currentTime = currentTime;
+		setIsDragging(false)
 	};
 
 	const handleMouseDown = () => {
@@ -447,9 +448,9 @@ const VideoPlayer = () => {
 					style={{ cursor: 'pointer' }}
 					onClick={handleProgressTimeOnclick}
 					onMouseDown={handleMouseDown}
-					onMouseMove={handleMouseMove}
 					onMouseUp={handleMouseUp}
 					onMouseLeave={handleMouseUp}
+					onMouseMove={handleMouseMove}
 				>
 					<div className="bg-white" >
 						<div className=" border-[1px] border-[#F97316] my-2 " style={{ width: `${progress}%` }}>
