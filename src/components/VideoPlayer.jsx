@@ -89,11 +89,11 @@ const VideoPlayer = () => {
 		},
 	]
 
+	const videoRef = useRef(null);
 	const [progress, setProgress] = useState(0);
 	const [isPlaying, setPlaying] = useState(false);
 	const [volume, setVolume] = useState(1);
 	const [isMuted, setIsMuted] = useState(false);
-	const videoRef = useRef(null);
 	const [currentTime, setCurrentTime] = useState(0);
 	const [duration, setDuration] = useState(0);
 	const [optionOpen, setOptionOpen] = useState(false);
@@ -102,6 +102,8 @@ const VideoPlayer = () => {
 	const [selectedReport, setSelectedReport] = useState('')
 	const progressRef = useRef(null)
 	const [isDragging, setIsDragging] = useState(false);
+
+
 
 
 
@@ -126,16 +128,19 @@ const VideoPlayer = () => {
 	};
 
 
-	const handleSoundChange = (event) => {
-		event.stopPropagation()
-		const volume = parseFloat(event.target.value);
-		const video = videoRef.current;
+	// const handleSoundChange = (event) => {
+	// 	event.stopPropagation()
+	// 	const volume = parseFloat(event.target.value);
+	// 	const video = videoRef.current;
 
-		if (video) {
-			setVolume(volume)
-			video.volume = volume;
-		}
-	};
+	// 	if (video) {
+	// 		setVolume(volume)
+	// 		video.volume = volume;
+	// 	}
+	// };
+
+
+
 
 	const handleProgress = () => {
 		const video = videoRef.current;
@@ -174,6 +179,23 @@ const VideoPlayer = () => {
 
 	const toggleMute = () => {
 		setIsMuted((prevMuted) => !prevMuted);
+
+		const userSettingString = localStorage.getItem('userSetting');
+		const userSetting = JSON?.parse(userSettingString);
+
+		if (userSetting) {
+			if (userSetting.muted && userSetting?.userVolume < 0.05) {
+				const volumeInfo = { ...userSetting, muted: !isMuted, userVolume: 0.05 }
+				localStorage.setItem('userSetting', JSON.stringify(volumeInfo));
+			} else {
+				const volumeInfo = { ...userSetting, muted: !isMuted }
+				localStorage.setItem('userSetting', JSON.stringify(volumeInfo));
+			}
+		}
+
+		else {
+			localStorage.setItem('userSetting', JSON.stringify({ muted: !isMuted, userVolume: volume }));
+		}
 	};
 
 
@@ -231,25 +253,40 @@ const VideoPlayer = () => {
 		video.currentTime += 5;
 	};
 
-	const handleIncreaseVolume = () => {
-		const video = videoRef.current;
-		if (video.volume < 1) {
-			setVolume(prev => prev += 0.1)
-			video.volume += 0.1
-		}
-	};
-
-	const handleDecreaseVolume = () => {
-		const video = videoRef.current;
-		if (video.volume >= 0.1) {
-			setVolume(prev => prev -= 0.1)
-			video.volume -= 0.1;
-		}
-	};
-
-
 	useEffect(() => {
 		const video = videoRef.current;
+		video.volume = volume;
+		const handleVolumeUp = () => {
+			let newVolume = volume + 0.05
+			const updatedValue = parseFloat(newVolume)?.toFixed(2)
+			setVolume(updatedValue)
+			const volumeInfo = {
+				muted: false,
+				userVolume: updatedValue
+			}
+			localStorage.setItem('userSetting', JSON.stringify(volumeInfo))
+
+			video.volume += 0.05
+		}
+
+		const handleVolumeDown = () => {
+			let newVolume = volume - 0.05
+			const updatedValue = parseFloat(newVolume)?.toFixed(2)
+			let muted = false;
+			if (volume <= 0.05) {
+				muted = true
+			}
+			setVolume(updatedValue);
+			const volumeInfo = {
+				muted: muted,
+				userVolume: updatedValue
+			}
+			localStorage.setItem('userSetting', JSON.stringify(volumeInfo))
+			video.volume -= 0.05
+
+
+		}
+
 
 		const handleKeyDown = (event) => {
 			const { keyCode } = event;
@@ -273,10 +310,15 @@ const VideoPlayer = () => {
 					handleTogglePictureInPicture();
 					break;
 				case 38:
-					handleIncreaseVolume();
+					if (volume <= 0.95) {
+						handleVolumeUp()
+					}
 					break;
 				case 40:
-					handleDecreaseVolume();
+					if (volume >= 0.05) {
+						handleVolumeDown()
+					}
+
 					break;
 				case 77:
 					toggleMute();
@@ -285,6 +327,20 @@ const VideoPlayer = () => {
 					break;
 			}
 		};
+
+		// Get userdata from Localstorage and set to state 
+		const userSettingString = localStorage.getItem('userSetting');
+		const userSetting = JSON?.parse(userSettingString);
+		if (userSetting) {
+			const userVolume = parseFloat(userSetting?.userVolume).toFixed(2);
+
+			if (userSetting.muted) {
+				setIsMuted(true)
+				setVolume(0)
+			} else {
+				setVolume(Number(userVolume))
+			}
+		}
 
 
 
@@ -315,9 +371,7 @@ const VideoPlayer = () => {
 		};
 
 
-	}, [videoRef.current]);
-
-
+	}, [isMuted, volume]);
 
 
 	return (
@@ -365,11 +419,11 @@ const VideoPlayer = () => {
 								<span>
 
 									{
-										volume <= 0 || isMuted ? <svg onClick={toggleMute} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+										volume <= 0 || isMuted ? <svg onClick={toggleMute} className="cursor-pointer" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
 											<path d="M9.29813 0.58414C9.11253 0.495606 8.89387 0.519073 8.73387 0.64814L3.5456 4.79854H1.06667C0.478933 4.79854 0 5.27747 0 5.86521V10.1319C0 10.7207 0.478933 11.1985 1.06667 11.1985H3.5456L8.7328 15.3489C8.82987 15.4257 8.94827 15.4652 9.06667 15.4652C9.1456 15.4652 9.22453 15.4471 9.29813 15.4119C9.48267 15.3233 9.6 15.1367 9.6 14.9319V1.06521C9.6 0.860406 9.48267 0.67374 9.29813 0.58414Z" fill="white" />
 											<path d="M14.5298 6.03223C14.2368 5.73926 13.7622 5.73926 13.4692 6.03223L12.5583 6.94302L11.6475 6.03223C11.3545 5.73926 10.8799 5.73926 10.5869 6.03223C10.294 6.3252 10.2939 6.80005 10.5869 7.09277L11.4978 8.00354L10.5869 8.9143C10.2939 9.20727 10.2939 9.68188 10.5869 9.97485C10.7334 10.1213 10.9253 10.1946 11.1172 10.1946C11.3091 10.1946 11.501 10.1213 11.6475 9.97485L12.5584 9.06405L13.4692 9.97485C13.6157 10.1213 13.8076 10.1946 13.9995 10.1946C14.1914 10.1946 14.3833 10.1213 14.5298 9.97485C14.8228 9.68188 14.8228 9.20727 14.5298 8.9143L13.6189 8.00354L14.5298 7.09277C14.8227 6.80005 14.8228 6.3252 14.5298 6.03223Z" fill="white" />
 										</svg>
-											: volume < 0.60 ? <svg onClick={toggleMute} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+											: volume < 0.60 ? <svg className="cursor-pointer" onClick={toggleMute} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
 												<path d="M9.29813 0.58414C9.11253 0.495606 8.89387 0.519073 8.73387 0.64814L3.5456 4.79854H1.06667C0.478933 4.79854 0 5.27747 0 5.86521V10.1319C0 10.7207 0.478933 11.1985 1.06667 11.1985H3.5456L8.7328 15.3489C8.82987 15.4257 8.94827 15.4652 9.06667 15.4652C9.1456 15.4652 9.22453 15.4471 9.29813 15.4119C9.48267 15.3233 9.6 15.1367 9.6 14.9319V1.06521C9.6 0.860406 9.48267 0.67374 9.29813 0.58414Z" fill="white" />
 												<path d="M12.2986 4.2277C12.0885 4.02076 11.7514 4.02396 11.5445 4.23196C11.3376 4.4421 11.3397 4.77916 11.5488 4.98716C12.3552 5.7829 12.7989 6.85276 12.7989 7.99943C12.7989 9.1461 12.3552 10.216 11.5488 11.0117C11.3397 11.2176 11.3376 11.5557 11.5445 11.7658C11.649 11.8714 11.7866 11.9237 11.9232 11.9237C12.0586 11.9237 12.1941 11.8725 12.2986 11.769C13.3098 10.7738 13.8656 9.4341 13.8656 7.99943C13.8656 6.56476 13.3098 5.22503 12.2986 4.2277Z" fill="white" />
 											</svg>
@@ -385,7 +439,23 @@ const VideoPlayer = () => {
 
 									}
 								</span>
-								<input className="sound-slider" type="range" name="volume" id="volume" min="0" max="1" step="0.05" onChange={handleSoundChange} />
+								{/* <input className="sound-slider" type="range" name="volume" id="volume" min="0" max="1" step="0.05" onChange={handleSoundChange} /> */}
+
+
+
+
+								<div className="bg-white w-[60px] rounded-full relative" >
+									<div className="bg-orange-500 py-1 rounded-full " style={{ width: `${Math.floor(volume * 100)}%` }}>
+
+									</div>
+
+
+								</div>
+
+
+
+
+
 							</div>
 						</div>
 						{/* Time timeline */}
